@@ -7,9 +7,70 @@
 
 static const char* file_name = "database.txt";
 
-static int Read_Data(const char* file_name, NODE* node);
-static int Write_Data(const char* file_name, NODE* node);
 
+// Считать очередной узел из файла
+static void Read_New_Node(FILE* file, NODE* node)
+{
+
+    fscanf(file, "%[^\n]", node->data);
+    fgetc(file);
+    char bracket = '\0';
+    bracket = fgetc(file);
+    fgetc(file);
+
+    if (bracket == '{')
+    {
+        char* data = (char *) calloc(64, sizeof(char));
+        NODE* right_son = Create_Node(data, node, NULL, NULL);
+        node->right = right_son;
+        Read_New_Node(file, right_son);
+    }
+
+
+    if (bracket == '{')
+    {
+        char* data = (char *) calloc(64, sizeof(char));
+        NODE* left_son = Create_Node(data, node, NULL, NULL);
+        node->left = left_son;
+        Read_New_Node(file, left_son);
+    }
+    
+}
+
+int Read_Data(NODE* node)
+{
+    // FIXME: Наладить считывание с файла!!!!
+    assert(node != NULL);
+    
+    FILE* file = fopen(file_name, "r");
+    
+    fgetc(file);    // Убираем первую '{'
+    fgetc(file);
+
+    Read_New_Node(file, node);
+    fclose(file);
+
+    return 0;
+}
+
+
+static void Write_New_Node(FILE* file, NODE* node)
+{
+    fprintf(file, "{\n");
+    fprintf(file,"%s\n", node->data);
+    if (node->right) Write_New_Node(file, node->right);
+    if (node->left) Write_New_Node(file, node->left);
+    fprintf(file, "}\n");
+}   
+
+// Сохранить данные
+int Write_Data(NODE* node)
+{
+    FILE* file = fopen(file_name, "w");
+    Write_New_Node(file, node);
+    fclose(file);
+    return 0;
+}
 
 // Функция ведёт взаимодействие с пользователем, до того момента пока не дойдёт до конца дерева.
 static NODE* Search_Answer(NODE* head)
@@ -43,19 +104,22 @@ static NODE* Search_Answer(NODE* head)
 static bool Check_Answer(NODE* node)
 {
     assert(node != NULL);
-
-    printf("Его имя: %s?\n(Y/N):", node->data);
     char answer = '\0';
-    scanf("%c", &answer);
-    switch (answer)
+    while (true)
     {
-    case 'Y':
-        return true;
-    case 'N':
-        return false;
-    default:
-        printf("Incorrect answer! Try again.\n");
+        printf("Его имя: %s?\n(Y/N):", node->data);
+        scanf("%c", &answer);
+        switch (answer)
+        {
+        case 'Y':
+            return true;
+        case 'N':
+            return false;
+        default:
+            printf("Incorrect answer! Try again.\n");
+        }
     }
+
 }
 
 
@@ -120,7 +184,7 @@ static ERROR_FLAGS Update_Tree(NODE* node, char* difference, char* answer)
         parent->right = new_node;
     else
     {
-        //FIXME - Вынести из функции через return
+        //FIXME - Вынести из функции через return сообщение об ошибке
         printf("Somthing wrong. %s:%d(%s)\n", __FILE__, __LINE__, __FUNCTION__);
         printf("Do dump in filename=\"errdump.dot\"\n"); 
         const char *dump_fname = "errdump.dot";
@@ -156,12 +220,12 @@ static void Processing_Result(bool success, NODE* final_node)
 int Play_Akinator(void)
 {
     NODE head = {};
-    Read_Data(file_name, &head);
+    Read_Data(&head);
 
     NODE* final_node = Search_Answer(&head);
 
     Processing_Result(Check_Answer(final_node), final_node);
     
-    Write_Data(file_name, &head);
+    Write_Data(&head);
     return 0;
 }
