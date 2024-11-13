@@ -7,3 +7,4 @@ makefile
 assembler.asm
 machine_code.bin
 main.cpp
+build
