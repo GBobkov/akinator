@@ -18,11 +18,13 @@ enum ERROR_FLAGS
 };
 
 // Создаёт узел
-NODE* Create_Node(char * data, NODE* parent,  NODE* left, NODE* right);
+NODE* Create_Node(const char * data, NODE* parent,  NODE* left, NODE* right);
 
 // Освобождает память
 ERROR_FLAGS Destroy_Node(NODE* node);
 
+//рекурсивно удаляет дерево.
+void Destroy_Tree(NODE* head);
 
 // Заполнить dotfile.
 void Node_Dump(const char* dump_fname, NODE* node);

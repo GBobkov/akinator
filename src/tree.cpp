@@ -2,13 +2,18 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 
-NODE* Create_Node(char * data, NODE* parent,  NODE* left, NODE* right)
+
+// Создать узел с массивом data.
+NODE* Create_Node(const char * data, NODE* parent,  NODE* left, NODE* right)
 {
+    char* question = (char *) calloc(64, sizeof(char));
+    question = strcpy(question, data);
 
     NODE* node = (NODE *) calloc(1, sizeof(NODE));
-    node->data = data;
+    node->data = question;
     node->parent = parent;
     node->left = left;
     node->right = right;
@@ -16,16 +21,27 @@ NODE* Create_Node(char * data, NODE* parent,  NODE* left, NODE* right)
     return node;
 }
 
+
+// удалить конкретный узел
 ERROR_FLAGS Destroy_Node(NODE* node)
 {
     assert(node != NULL);
 
-    free(node);
+    free(node->data); // предполагается, что память для data динамическая.
+    free(node); 
     return NO_ERROR;
 }
 
+// рекурсивно удаляет дерево
+void Destroy_Tree(NODE* head)
+{
+    if (head->right) Destroy_Tree(head->right);
+    if (head->left) Destroy_Tree(head->left);
+    Destroy_Node(head);
+}
 
 
+// инициализация узлов в dot-file
 static void Nodes_Init_2Dump(FILE* dump_file, NODE* node)
 {
     assert(dump_file != NULL);
@@ -39,6 +55,7 @@ static void Nodes_Init_2Dump(FILE* dump_file, NODE* node)
 }
 
 
+// соеденить стрелками элементы дерева
 static void Write_Connections_2Dump(FILE* dump_file, NODE* node)
 {
     assert(dump_file != NULL);
@@ -57,6 +74,8 @@ static void Write_Connections_2Dump(FILE* dump_file, NODE* node)
 }
 
 
+
+// Сформировать dot-file и png.
 void Node_Dump(const char* dump_fname, NODE* node)
 {
 
@@ -86,4 +105,6 @@ void Node_Dump(const char* dump_fname, NODE* node)
     fclose(dump_file);
     #undef FREE_COLOR
     #undef BUSY_COLOR
+
+    system("dot dump.dot -Tpng -o dump.png");
 }
