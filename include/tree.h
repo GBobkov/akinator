@@ -29,5 +29,15 @@ void Destroy_Tree(NODE* head);
 // Заполнить dotfile.
 void Node_Dump(const char* dump_fname, NODE* node);
 
+// Считать данные с файла и создать дерево.
+int Read_Data(NODE* node);
+
+
+// Сохранить данные
+int Write_Data(NODE* node);
+
+
+// функция добовляет в дерево новый ответ, перестраивая его конечную часть.
+ERROR_FLAGS Update_Tree(NODE* node, char* difference, char* answer);
 
 #endif

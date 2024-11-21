@@ -5,7 +5,4 @@
 
 int Play_Akinator(void);
 
-
-int Write_Data(NODE* node);
-int Read_Data(NODE* node);
 #endif

@@ -5,11 +5,15 @@
 #include <string.h>
 #include <assert.h>
 
+#define BUFSIZE 64
+
+static const char* database_file_name = "database.txt";
+
 
 // Создать узел с массивом data.
 NODE* Create_Node(const char * data, NODE* parent,  NODE* left, NODE* right)
 {
-    char* question = (char *) calloc(64, sizeof(char));
+    char* question = (char *) calloc(BUFSIZE, sizeof(char));
     question = strcpy(question, data);
 
     NODE* node = (NODE *) calloc(1, sizeof(NODE));
@@ -94,7 +98,7 @@ void Node_Dump(const char* dump_fname, NODE* node)
     fprintf (dump_file, "digraph G\n");
     fprintf (dump_file, "{\n");
     fprintf (dump_file, "splines=line;\n");
-    fprintf (dump_file, "nodesep=0.5;\n"); // расстояние между ячейками
+    fprintf (dump_file, "nodesep=2  ;\n"); // расстояние между ячейками
     fprintf (dump_file, "node[shape=\"oval\", style=\"rounded, filled\"];\n\n");
 
     Nodes_Init_2Dump(dump_file, node);
@@ -110,4 +114,106 @@ void Node_Dump(const char* dump_fname, NODE* node)
     #undef BUSY_COLOR
 
     system("dot dump.dot -Tpng -o dump.png");
+}
+
+
+
+// функция добовляет в дерево новый ответ, перестраивая его конечную часть.
+ERROR_FLAGS Update_Tree(NODE* node, char* difference, char* answer)
+{
+    assert(node         != NULL);
+    assert(difference   != NULL);
+    assert(answer       != NULL);
+
+    NODE* parent = node->parent;
+    
+    NODE* left_ans  = Create_Node(node->data, node, NULL, NULL);
+    NODE* right_ans = Create_Node(answer, node, NULL, NULL);
+    node->data = difference;
+    node->left  = left_ans;
+    node->right = right_ans;
+
+    
+    return NO_ERROR;
+}
+
+
+
+// Считать очередной узел из файла
+static void Read_New_Node(FILE* file, NODE* node)
+{
+    fscanf(file, "%[^\n]", node->data);
+    fgetc(file); // Достаём \n.
+
+    char bracket = '\0';
+    bracket = fgetc(file); // Достаём скобку.
+    fgetc(file);    // Достаём \n.
+
+    //printf("firstcall...  data=%s\t\tbracket=%c\n", node->data, bracket);
+    if (bracket == '{')
+    {
+        NODE* right_son = Create_Node("", node, NULL, NULL);
+        node->right = right_son;
+        Read_New_Node(file, right_son);
+    }
+
+    
+    //printf("after_first_if=%c\n", bracket);
+    if (bracket == '{')
+    {
+        bracket = fgetc(file);  // Достаём скобку.
+        fgetc(file); // Достаём \n.
+        //printf("rebracket...  data=%s\t\tnew_bracket=%c\n", node->data, bracket);
+    }
+
+    //printf("secondcall...  data=%s\t\tbracket=%c\n", node->data, bracket);
+    if (bracket == '{')
+    {
+        NODE* left_son = Create_Node("", node, NULL, NULL);
+        node->left = left_son;
+        Read_New_Node(file, left_son);
+        fgetc(file);    // Достаём скобку.
+        fgetc(file);    // Достаём \n.
+    }
+    //printf("exit_from_func=%c\n", bracket);
+    
+}
+
+
+// Считать данные с файла и создать дерево.
+int Read_Data(NODE* node)
+{
+    FILE* file = fopen(database_file_name, "r");
+
+    assert(node != NULL);
+    assert(file != NULL);
+    
+    fgetc(file);    // Убираем первую '{'
+    fgetc(file);
+
+    Read_New_Node(file, node);
+    fclose(file);
+
+    return 0;
+}
+
+
+// Рекурсивно записываем дерево
+static void Write_New_Node(FILE* file, NODE* node)
+{
+    fprintf(file, "{\n");
+    fprintf(file,"%s\n", node->data);
+    if (node->right) Write_New_Node(file, node->right);
+    if (node->left) Write_New_Node(file, node->left);
+    fprintf(file, "}\n");
+}   
+
+
+// Сохранить данные
+int Write_Data(NODE* node)
+{
+    FILE* file = fopen(database_file_name, "w");
+    Write_New_Node(file, node);
+    fclose(file);
+    return 0;
 }
