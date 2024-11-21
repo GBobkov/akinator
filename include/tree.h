@@ -14,7 +14,7 @@ struct NODE
 enum ERROR_FLAGS
 {
     UPDATE_TREE_ERROR=1,
-    NO_ERROR=0
+    NO_ERROR_TREE=0
 };
 
 // Создаёт узел
